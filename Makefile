@@ -1,9 +1,11 @@
-.PHONY: paper
-paper: 
-	TEXINPUTS=.//: latexmk -pdf -use-make paper.tex
+TEX = $(wildcard *.tex)
+
+all: $(TEX) 
+	TEXINPUTS=.//: latexmk -pdf -use-make -outdir=build $(TEX)
 
 .PHONY: clean
 clean:
 	@rm -f *~
-	latexmk -CA
+	latexmk -outdir=build -CA
+	rm -rf ./build
 

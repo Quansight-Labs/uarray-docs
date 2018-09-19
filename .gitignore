@@ -248,6 +248,6 @@ TSWLatexianTemp*
 # standalone packages
 *.sta
 
-# Main paper
-paper.pdf
+# Main docs
+build/
 
