@@ -1,0 +1,48 @@
+\usepackage{amsmath,amssymb}
+\usepackage[margin=2cm]{geometry}
+
+\usepackage{tabularx,booktabs}
+
+\newcommand{\dims}{\delta}
+\newcommand{\shape}{\rho}
+\newcommand{\size}{\tau}
+\newcommand{\product}{\pi}
+\newcommand{\ravel}{\mathrm{rav}}
+\newcommand{\take}[2]{{#1 \uparrow #2}}
+\newcommand{\drop}[2]{{#1 \downarrow #2}}
+\newcommand{\minus}[1]{{}^{-}{#1}}
+
+
+
+
+Let $\xi$ denote an array in MoA formalism
+and \verb|x| be the NumPy array in Python. Then we have the following
+correspondence table:\\[2ex]
+\begin{tabularx}{\textwidth}{lX}
+\begin{tabular}[m]{l|l|m{0.45\linewidth}|}
+  MoA & Python & Description \\\hline
+  $\xi$ & \verb|x=array(...)| 
+               & a multidimensional array\\
+  $\vec v\equiv<a\, b\, c>$ & \verb|v=array([a, b, c])| 
+               & a one dimensional array, a vector\\
+  $\dims\xi\equiv n$ & \verb|x.ndim==n| 
+               & the dimensionality of an array \\
+  $\shape\xi\equiv<s_0\, \ldots\, s_{n-1}>$ & \verb|x.shape==(s_0,...,s_n1)| 
+               & the shape of an array \\
+  $\vec i\psi\xi\equiv\xi[i_0;\ldots;i_{n-1}]$ & \verb|x[i_0,...,i_n1]| 
+               & an array item\\
+  $\ravel \xi$ & \verb|x.ravel()| 
+               & collapse an array to one dimension (row ordering is assumed)\\
+  $\product\vec v$ & \verb|x.prod()| 
+               & product of vector items\\
+  $\size\xi$   & \verb|x.size| 
+               & total number of array items\\
+  $\vec v,\vec w,\ldots$ & \verb|concatenate((v, w, ...))|
+               & join sequences of vectors\\
+  $\minus k$ & \verb|-k| & negative of scalar value $k$\\
+  $\take k{\vec v}; \take{\minus k}{\vec v} $&\verb|v[:k] ; v[-k:]|
+               & take first $k$ items; take last $k$ items\\
+
+                                                           
+\end{tabular}  
+\end{tabularx}
