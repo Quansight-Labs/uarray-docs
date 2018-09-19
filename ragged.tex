@@ -1,0 +1,124 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margins=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Key Mathematical Points: First Steps}
+\author{Lenore, Saul, Pearu, Hameer}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+
+\section{Sound  Foundations}
+\subsection{Getting Shapes for Ragged Arrays}
+We address ragged arrays, or vectors of vectors. The overall vector, 1-d array, has a shape and each component of the vector has a shape. 
+
+For example
+\begin{eqnarray}
+\mbox{Let }
+\vec d \equiv <<0\;1> <2\;3\;4> <5> <6\;7\;7\;9>>\\
+\vec v \equiv <1\; 4\; 1\; 2\; 1\; 3\; 1\; 1 \;1\; 4>
+\mbox{an encoding of the shapes of } \vec v\\
+\end{eqnarray}
+The algorithm to get an $<i\;j>$ index, s.t. $\forall \;i,j$ s.t.
+\[ 0 \leq i < \tau \vec v \mbox{ and } 0 \leq j < \tau (\vec v[i])\]
+Let $size \equiv \tau \vec v$. Let ${size}_j \equiv \tau (\vec v[i])$
+In the above case size is $4$.
+${size}_0 =2, {size}_1 = 3, {size}_2 = 1, {size}_3 = 4$
+\subsection{Psi Extensions}
+Akin to the sparse extensions, we'll need to do the same for whatever array representation we wish to compose. Our test will we be able to compose our various forms of indexing and
+can we do that across function definition so that we can also compose expressions and functions.
+\subsection{Psi Calculus supports vectors}
+Prior to psi reduction we must know what kind of array it is, dense, sparse, ragged, whatever. All we needed to do was to continue to seek out shapes and sizes to formulate how to use the shapes. We believe we have this done, at least at the semantic level. Here is the new definition.
+\subsubsection{Psi for Ragged Arrays}
+Given a vector, $\vec v$ with the following vector components.
+\[ \vec v \equiv\; << \; 2\;\; 3 > \;,\; <4>\;,\;< 5 \;6\;>>\]
+The total number of components in the highest level array is : 
+\[ \tau \vec v \equiv t_{\vec v} \equiv 3 \]
+and $\forall i \; s.t. \; 0 \leq i < 3$
+\[ \tau (\vec v [i]) \equiv t_{\vec v[i]}\]
+Then $\forall \; j\; s.t. 0 \leq j < t_{\vec v[i]}$
+\[ \vec v[i][j] \]
+gets an arbitrary component from $\vec v$.
+All of this allows us to do psi reduction. 
+
+We assume a vector can be indexed by a vector. We get to the result above from the following identities:
+\begin{eqnarray}
+\vec v [i][\iota (\tau \vec {v[i]}) ] \equiv 
+\vec v [i][\iota (\tau \vec {v[i]}) ] [j] \\
+\mbox{where $0 \leq j < t_{\vec {v[i}]}$} \\
+\mbox{We can say:}\\
+\vec v[i][\iota (\tau (\vec  v [i])) ] \equiv 
+\vec v [i][\iota (t_{\vec {v[i}]}) ] [j] \equiv \vec v [i][j]\\
+\mbox{By definition of iota \nonumber}
+\end{eqnarray}
+\subsection{Generic Code}
+Generic Code to support above goes here.
+\subsection{Actual Code}
+Actual Code goes here.
+\subsection{Psi Reduction of Jagged Arrays}
+One example that needs an improvement written in jagged arrays, not too big. I'll have to do psi reduction by hand.
+\subsection{Performance with Graphs to Prove our conjectures}
+Graphs go here.
+
+
+
+
+
+
+
+
+
+\end{document}
