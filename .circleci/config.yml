@@ -1,0 +1,15 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: person142/latex:latest
+    steps:
+      - checkout
+      - run: |
+          mkdir /artifacts
+          make
+          cp paper.pdf /papers/artifacts
+      - store_artifacts:
+          path: /artifacts
+
