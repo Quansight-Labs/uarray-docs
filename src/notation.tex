@@ -1,236 +1,50 @@
 \documentclass[a4paper,12pt]{article}
-\usepackage{amsmath,amssymb,wasysym}
+\usepackage{amsmath,amssymb}
 \usepackage[margin=2cm]{geometry}
 
-\usepackage{comment}
-\usepackage{longtable}
 \usepackage{tabularx,booktabs}
-\usepackage{listings}
-\lstset{basicstyle=\ttfamily}
-\newcommand{\py}{\lstinline}
 
-\newcommand{\dims}{\delta\,}
-\newcommand{\shape}{\rho\,}
-\newcommand{\reshape}{\,\rho\,}
-\newcommand{\size}{\tau\,}
-\newcommand{\product}{\pi\,}
-\newcommand{\ravel}{\mathrm{rav}\,}
-\newcommand{\take}[2]{{#1\,\uparrow\,#2}}
-\newcommand{\drop}[2]{{#1\,\downarrow\,#2}}
-\newcommand{\minus}[1]{{}^{\boldsymbol{\mbox{-}}\!}{#1}}
-\newcommand{\rop}[1]{\,\mathrm{#1}^*\,}
-\newcommand{\op}[1]{\,\mathrm{#1}\,}
-\newcommand{\uop}[1]{\mathrm{#1}\,}
-\newcommand{\id}[1]{\mathrm{id}(\op{#1})}
-\newcommand{\red}[1]{{}_{\op{#1}\!}\mathrm{red}\,}
-\newcommand{\scan}[1]{{}_{\op{#1}\!}\mathrm{scan}\,}
-\newcommand{\gu}{\mathrm{gu}\,}
-\newcommand{\gd}{\mathrm{gd}\,}
-\newcommand{\range}{\iota\,}
-\newcommand{\compress}{\,\notslash\,}
-\newcommand{\expand}{\,\notbackslash\,}
-\newcommand{\reverse}{\phi\,}
-\newcommand{\rotate}[1]{{#1}\theta\,}
-\newcommand{\transpose}[1]{{#1}\bigcirc\!\!\!\!\!\!\backslash\,\,} % find proper symbol
-\newcommand{\hop}[2]{{{}_{#1}\Omega_{#2}}\,}
-\newcommand{\getitem}[2]{{#2}\,\psi\,{#1}}
-
-\newcommand{\Z}{{\mathbb{Z}}}
-
-\title{MoA formalism and arrays in software}
-\author{Pearu Peterson}
-
+\newcommand{\dims}{\delta}
+\newcommand{\shape}{\rho}
+\newcommand{\size}{\tau}
+\newcommand{\product}{\pi}
+\newcommand{\ravel}{\mathrm{rav}}
+\newcommand{\take}[2]{{#1 \uparrow #2}}
+\newcommand{\drop}[2]{{#1 \downarrow #2}}
+\newcommand{\minus}[1]{{}^{-}{#1}}
 \begin{document}
-\maketitle
-\section{Introduction}
-
-MoA - Mathematics of Arrays - defines formalism (based on APL) to
-describe multidimensional arrays and operations on these. On the other
-hand, contemporary array processing software (NumPy, Xnd, Apache
-Arrow, etc) implement multidimensional array container objects and
-define UI to interact with the array objects. The aim of this document
-is to provide a mapping between MoA formalism and UI-s of widely used
-array processing software.
 
 
 
-\section{Basic definitions}
-
-The MoA formalism is originally defined in ``A Mathematics of Arrays''
-by Lenore Mullin, PhD thesis, 1988.  We use NumPy UI as a
-representative of a software implementing UI for multidimensional
-arrays. For brevity, we assume \verb+from numpy import *+.
-
-In general, \emph{an array is an object that has a mapping to get
-  array items} \footnote{A mapping $f$ is a set of argument and value
-  pairs,$(i,v)$, and is represented as $f(i)=v$. We consider only
-  single-valued mappings.} . The arguments to the mapping are called
-\emph{indices}, all valid indices define the so-called \emph{index
-  set} of an array. The items can be arbitrary objects.
-
-Two arrays are \emph{equal} iff their get items mappings are equal.
-
-\emph{Element-wise operations} of two arrays are defined iff the index
-sets of the two arrays are equal.
-
-Arrays can be classified according to how the mappings are defined:
-\begin{description}
-\item[Multidimensional arrays:] The index set of
-  an $N$-dimensional array is an $N$-dimensional hyperrectangle in
-  $\Z^N$: $[0,\ldots,s_0-1]\times\cdots\times[0,\ldots,s_{N-1}-1]$
-  where non-negative integers $(s_0,\ldots,s_{N-1})$ define the shape
-  of an array.
-\item[Ragged arrays:] The index set of an
-  $N$-dimensional ragged array is a connected subset of an
-  $N$-dimensional hyperrectangle in $\Z^N$. The concrete
-  representation of the index set may have different forms.
-\item[Sparse arrays:] The index set of an sparse array is a possibly
-  disconnected subset of $N$-dimensional hyperrectangle in $\Z^N$ and
-  is extended to the full hyperrectangle by defining the default
-  value.
-\end{description}
-
-The MoA deals with multidimensional arrays only.  The NumPy implements
-array object for multidimensional arrays only. There is one-to-one
-relation between MoA formalism and NumPy UI. Xnd implements a more
-general container object than NumPy ndarray.
-
-The goal is to extend MoA formalism to ragged arrays and then use this
-to define an UI as well as optimized algorithms to the array object
-implementation software such as Xnd. 
-
-The current working hypothesis is that the ragged arrays can be
-represented as arrays of arrays where the subarrays are
-multidimensional arrays.
-
-\section{Multidimensional arrays: MoA and NumPy}
-
-\begin{comment}
-\newcommand{\MoADefinition}[1]{
-  \begin{itemize}
-  #1
-  \end{itemize}
-}
-\newcommand{\MoAItem}[3]{\item {#1}
-  \begin{description}
-  \item[MoA:] {#2}
-  \item[NumPy:] {#3}
-  \end{description}
-}  
-\end{comment}
-%\begin{comment}
-\newcommand{\MoADefinition}[1]{
-\renewcommand{\arraystretch}{2}
-\begin{longtable}{| p{.5\textwidth} | p{.5\textwidth} |}
-#1
-\end{longtable}
-\renewcommand{\arraystretch}{1}
-}
-\newcommand{\MoAItem}[3]{
-\multicolumn2{l}{
-  \begin{minipage}[l]{0.9\linewidth} \vspace{2ex}
-  $\bullet$ #1\\[0.1ex]
-  \end{minipage}
-}\\\hline
-\begin{minipage}[l]{0.95\linewidth}
-{#2}  
-\end{minipage}
-&
-\begin{minipage}[l]{0.95\linewidth}
-{#3}  
-\end{minipage}\\\hline
-}
-%\end{comment}
-
-
-
-
-We have the following correspondence table for basic notions:
-\MoADefinition{
-  \MoAItem{a multidimensional array}{$\xi$}{\py'x=array(...)'}
-  \MoAItem{a one dimensional array, a vector}{$\vec v\equiv<v_0\, v_1\, \ldots>$}{\py'v=array([v_0, v_1, ...])'}
-  \MoAItem{total number of array items}{$\size\xi$}{\py'x.size'}
-  \MoAItem{the shape of an array is a vector of non-negative integers}{$\shape\xi\equiv<s_0\, \ldots\, s_{n-1}>$}{\py`x.shape==(s_0,...,s_n1)`}
-  \MoAItem{the dimensionality of an array is non-negative integer}{$\dims\xi\equiv n\equiv\size\shape\xi$}{\py'x.ndim==n==len(x.shape)'}
-  \MoAItem{an array item}{$\getitem\xi{\vec i}\equiv\xi[i_0;\ldots;i_{n-1}]$}{\py'x[i_0,...,i_n1]'}
-  \MoAItem{negative of $k$}{$\minus k$}{\py'-k'}
-  \MoAItem{$\gamma$ function is used to define the mapping between the indices of an array and its ravelled version}{
-  \begin{eqnarray*}
-\gamma(<>;<>)&\equiv&0\\
-\gamma(\vec a;\vec b)&\equiv&a_{-1} + b_{-1}\gamma(\drop{\minus1}{\vec a}; \drop{\minus1}{\vec b})
-  \end{eqnarray*}
-}{}
-  \MoAItem{inverse of $\gamma$ with respect to the first argument}{$\gamma'\ldots \gamma(\gamma'(n;\vec x); \vec x)=n$}{}
-}
-
-MoA defines a number of operators on multidimensional arrays:
-\MoADefinition{
-  \MoAItem{collapse an array to one dimension (row ordering is assumed)}{$\ravel \xi$}{\py'x.ravel()'}
-  \MoAItem{product of vector items}{$\product\vec v$}{\py'v.prod()'}
-
-}
-
-MoA defines array construction operators:
-\MoADefinition{
-  \MoAItem{join a sequences of vectors}{$\vec v,\vec w,\ldots$}{\py'concatenate((v, w, ...))'}
-  \MoAItem{a range of integers}{$\range n\equiv 0,1+\range(n-1)$}{\py'arange(n)'}
-  \MoAItem{compress}{${\vec v}_l\compress{\vec v}_r$}{\py''}
-  \MoAItem{}{${\vec v}_l\expand{\vec v}_r$}{\py''}
-  % \MoAItem{}{$$}{\py''}
-  % \MoAItem{}{$$}{\py''}
-}
-
-
-MoA defines various slicing operations:
-\MoADefinition{
-  \MoAItem{take first $k$ items; take last $k$ items}{$\take k{\vec v}\,;\,\take{\minus k}{\vec v} $}{\py'v[:k] ; v[-k:]'}
-  \MoAItem{drop first $k$ items; drop last $k$ items}{$\drop k{\vec v}\,;\,\drop{\minus k}{\vec v} $}{\py'v[k:] ; v[:-k]'}
-  \MoAItem{}{$\take\sigma\xi$}{\py''}
-  \MoAItem{}{$\drop\sigma\xi$}{\py''}
-  \MoAItem{}{$\take{\vec v}\xi$}{\py''}
-  \MoAItem{}{$\drop{\vec v}\xi$}{\py''}
-}
-
-MoA defines the following relational operators,$(\rop{R}, \text{\py'rop'}) \in \{(\rop{>}, \text{\py'gt'}), (\rop{<}, \text{\py'lt'}), (\rop{=}, \text{\py'eq'}), \ldots\}$ :
-\MoADefinition{
-  \MoAItem{element-wise relational operators}{$\xi_l\rop{R}\xi_r$}{\py'x_l.__<rop>__(x_r).all()'}
-  \MoAItem{scalar extension of relational operators}{$\xi\rop{R}a$}{\py'x.__<rop>__(a*ones(x.shape)).all()'}
-  \MoAItem{}{$a\,R^{*}\xi$}{\py''}
-}
-
-MoA defines the following binary and unary operators, $(\op{op},\text{\py'op'})\in\{
-(\op+, \text{\py'add'}), (\op-, \text{\py'sub'}), (\op\times, \text{\py'mul'}), \ldots
-\}$:
-\MoADefinition{
-  \MoAItem{element-wise binary operators}{$\xi_l\op{op}\xi_r$}{\py'x_l.__<op>__(x_r)'}
-  \MoAItem{scalar extension of binary operators}{$\xi\op{op}a\quad;\quad a\op{op}\xi$}{\py'x.__op__(a*ones(x.shape))'}
-  \MoAItem{scalar extension of unary operators}{$\uop{uop}\xi$}{\py'x.__<uop>__()'}
-}
-
-MoA defines various array transformation operators:
-\MoADefinition{
-  \MoAItem{reshape a vector}{$\vec s\reshape\vec v$}{\py'v.reshape(s)'}
-  \MoAItem{reverse vector items}{$\reverse \vec v$}{\py'v[::-1]'}
-  \MoAItem{}{$\rotate{\sigma}\xi$}{\py''}
-  \MoAItem{transpose of an array}{$\transpose{\vec v}\xi$}{\py''}
-  \MoAItem{reduction}{$\red{op}\xi\equiv(\getitem\xi{<0>})\op{op}\red{op}(\drop1\xi)$}{}
-}
-
-
-TODO:\\
+Let $\xi$ denote an array in MoA formalism
+and \verb|x| be the NumPy array in Python. Then we have the following
+correspondence table:\\[2ex]
 \begin{tabularx}{\textwidth}{lX}
-\begin{tabular}[m]{m{0.2\linewidth}|l|m{0.45\linewidth}|}
+\begin{tabular}[m]{l|l|m{0.45\linewidth}|}
   MoA & Python & Description \\\hline
-$\vec i\psi\xi;\qquad \size\vec i <\size\shape\xi$ & \verb|x[i+(Ellipsis,)]| & slice of an array\\
-$\xi_l\psi\xi_r$ &&\\
-\multicolumn2{l|}{$\id{op}\ldots \sigma\op{op}\id{op}\equiv\sigma$}& identity of an operator $\op{op}$\\
-$\scan{op}$ && \\
-$\xi_l,\xi_r$ & & \\
-$\xi,\sigma\equiv \xi, (1,(\drop1{\shape\xi}))\shape\sigma$ &&\\
-$\vec v[\vec x]$ &&\\
-$\gu\vec v\,;\,\gd\vec v$ &&\\
-$\hop{f}{\vec a}\xi$&&\\
-$\xi_l(\hop{f}{\vec a})\xi_r$&&\\
+  $\xi$ & \verb|x=array(...)| 
+               & a multidimensional array\\
+  $\vec v\equiv<a\, b\, c>$ & \verb|v=array([a, b, c])| 
+               & a one dimensional array, a vector\\
+  $\dims\xi\equiv n$ & \verb|x.ndim==n| 
+               & the dimensionality of an array \\
+  $\shape\xi\equiv<s_0\, \ldots\, s_{n-1}>$ & \verb|x.shape==(s_0,...,s_n1)| 
+               & the shape of an array \\
+  $\vec i\psi\xi\equiv\xi[i_0;\ldots;i_{n-1}]$ & \verb|x[i_0,...,i_n1]| 
+               & an array item\\
+  $\ravel \xi$ & \verb|x.ravel()| 
+               & collapse an array to one dimension (row ordering is assumed)\\
+  $\product\vec v$ & \verb|x.prod()| 
+               & product of vector items\\
+  $\size\xi$   & \verb|x.size| 
+               & total number of array items\\
+  $\vec v,\vec w,\ldots$ & \verb|concatenate((v, w, ...))|
+               & join sequences of vectors\\
+  $\minus k$ & \verb|-k| & negative of scalar value $k$\\
+  $\take k{\vec v}; \take{\minus k}{\vec v} $&\verb|v[:k] ; v[-k:]|
+               & take first $k$ items; take last $k$ items\\
+
+                                                           
 \end{tabular}  
 \end{tabularx}
 
