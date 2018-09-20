@@ -9,7 +9,7 @@ jobs:
       - run: |
           mkdir /artifacts
           make
-          cp build/*.pdf /papers/artifacts
+          cp build/*.pdf /artifacts
       - store_artifacts:
           path: /artifacts
 
