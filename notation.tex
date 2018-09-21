@@ -130,10 +130,11 @@ array([[ 0,  1,  2,  3,  4],
        [ 5,  6,  7,  8,  9],
        [10, 11, 12, 13, 14],
        [ 0,  1,  2,  3,  4]])
-       \end{verbatim}
-       \begin{verbatim}
+\end{verbatim}
+     
 Let's prove the following two expressions are equivalent. We show they have
 the same normal form, a Denotational Normal Form (DNF), a semantic normal form that is not yet aware of memory layout or architectural components: vector registers, DMAs, etc.
+
 \begin{verbatim}
 (f[0:3].T * a.T)[-1+(a.T.shape)[0]]
 array([ 16,  81, 196])
@@ -142,8 +143,9 @@ array([ 16,  81, 196])
 \end{verbatim}
 To Prove:
 \begin{eqnarray}
-    (np.vstack((a,c))[0:3].T * a.T)[-1+(a.T.shape)[0]]\equiv  ((np.vstack((a,c))[0:3,] * a).T)[-1]
-\end{eqnarray}}
+    (\mbox{np.vstack((a,c))[0:3].T * a.T)[-1+(a.T.shape)[0]]}\equiv  ((\mbox{np.vstack((a,c))[0:3,] * a).T)[-1]}
+\end{eqnarray}
+
 \newpage
 \section{Multidimensional arrays: MoA and NumPy}
 
