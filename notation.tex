@@ -102,7 +102,46 @@ implementation software such as Xnd.
 The current working hypothesis is that the ragged arrays can be
 represented as arrays of arrays where the subarrays are
 multidimensional arrays.
+We first show how the inclusion of MoA and the Psi Calculus for dense arrays
+reduces to a normal form. This is a powerful concept in that many programmers design an algorithm different. We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
 
+Let's look at two Python expresssion:
+\begin{verbatim}
+   
+    >>> a=np.arange(15).reshape(3,5)
+>>> a
+array([[ 0,  1,  2,  3,  4],
+       [ 5,  6,  7,  8,  9],
+       [10, 11, 12, 13, 14]])
+>>> a.ndim
+2
+>>> a.shape
+(3, 5)
+>>> c=np.arange(5)
+>>> c
+array([0, 1, 2, 3, 4])
+>>> c.shape
+(5,)
+>>> f=np.vstack((a,c))
+>>> f.shape
+(4, 5)
+>>> f
+array([[ 0,  1,  2,  3,  4],
+       [ 5,  6,  7,  8,  9],
+       [10, 11, 12, 13, 14],
+       [ 0,  1,  2,  3,  4]])
+       \end{verbatim}
+       \begin{verbatim}
+Let's prove the following two expressions are equivalent. We show they have
+the same normal form, a Denotational Normal Form (DNF), a semantic normal form that is not yet aware of memory layout or architectural components: vector registers, DMAs, etc.
+\begin{verbatim}
+(f[0:3].T * a.T)[-1+(a.T.shape)[0]]
+array([ 16,  81, 196])
+>>> ((f[0:3,] * a).T)[-1]
+array([ 16,  81, 196])
+\end{verbatim}
+
+\newpage
 \section{Multidimensional arrays: MoA and NumPy}
 
 \begin{comment}
