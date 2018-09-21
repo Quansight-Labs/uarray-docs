@@ -102,50 +102,111 @@ implementation software such as Xnd.
 The current working hypothesis is that the ragged arrays can be
 represented as arrays of arrays where the subarrays are
 multidimensional arrays.
+
+\section{Optimization of Arrays in NumPy: Dense to Start}
 We first show how the inclusion of MoA and the Psi Calculus for dense arrays
 reduces to a normal form. This is a powerful concept in that many programmers design an algorithm different. We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
-
+\subsection{A Small Example}
 Let's look at two NumPy expresssions:
 \begin{verbatim}
    
-    >>> a=np.arange(15).reshape(3,5)
+>>> a=np.arange(30).reshape((2,3,5))
 >>> a
+array([[[ 0,  1,  2,  3,  4],
+        [ 5,  6,  7,  8,  9],
+        [10, 11, 12, 13, 14]],
+
+       [[15, 16, 17, 18, 19],
+        [20, 21, 22, 23, 24],
+        [25, 26, 27, 28, 29]]])
+        >>> b=a+2
+>>> b
+array([[[ 2,  3,  4,  5,  6],
+        [ 7,  8,  9, 10, 11],
+        [12, 13, 14, 15, 16]],
+
+       [[17, 18, 19, 20, 21],
+        [22, 23, 24, 25, 26],
+        [27, 28, 29, 30, 31]]])
+        >>> a.shape
+(2, 3, 5)
+>>> a[:,0,:]
 array([[ 0,  1,  2,  3,  4],
-       [ 5,  6,  7,  8,  9],
-       [10, 11, 12, 13, 14]])
->>> a.ndim
-2
->>> a.shape
-(3, 5)
->>> c=np.arange(5)
->>> c
-array([0, 1, 2, 3, 4])
->>> c.shape
+       [15, 16, 17, 18, 19]])
+>>> a[:,0,:][1,]
+array([15, 16, 17, 18, 19])
+>>> 
+>>> 
+>>> A=a[:,0,:][1,]
+>>> B=b[:,1,:][1,]
+>>> B
+array([22, 23, 24, 25, 26])
+>>> np.multiply.outer(A,B)
+array([[330, 345, 360, 375, 390],
+       [352, 368, 384, 400, 416],
+       [374, 391, 408, 425, 442],
+       [396, 414, 432, 450, 468],
+       [418, 437, 456, 475, 494]])
+>>> B=b[:,1,:][0,]
+>>> np.multiply.outer(A,B)
+array([[105, 120, 135, 150, 165],
+       [112, 128, 144, 160, 176],
+       [119, 136, 153, 170, 187],
+       [126, 144, 162, 180, 198],
+       [133, 152, 171, 190, 209]])
+>>> C=np.multiply.outer(A,B)
+>>> C
+array([[105, 120, 135, 150, 165],
+       [112, 128, 144, 160, 176],
+       [119, 136, 153, 170, 187],
+       [126, 144, 162, 180, 198],
+       [133, 152, 171, 190, 209]])
+>>> A
+array([15, 16, 17, 18, 19])
+>>> B
+array([ 7,  8,  9, 10, 11])
+>>> C
+array([[105, 120, 135, 150, 165],
+       [112, 128, 144, 160, 176],
+       [119, 136, 153, 170, 187],
+       [126, 144, 162, 180, 198],
+       [133, 152, 171, 190, 209]])
+>>> A
+array([15, 16, 17, 18, 19])
+>>> B
+array([ 7,  8,  9, 10, 11])
+>>> A.shape
 (5,)
->>> f=np.vstack((a,c))
->>> f.shape
-(4, 5)
->>> f
-array([[ 0,  1,  2,  3,  4],
-       [ 5,  6,  7,  8,  9],
-       [10, 11, 12, 13, 14],
-       [ 0,  1,  2,  3,  4]])
+>>> C[2,:]
+array([119, 136, 153, 170, 187])
+>>> A * C[2,:]
+array([1785, 2176, 2601, 3060, 3553])
+>>> np.inner(A,C[2,:])
+13175
 \end{verbatim}
      
 Let's prove the following two expressions are equivalent. We show they have
 the same normal form, a Denotational Normal Form (DNF), a semantic normal form that is not yet aware of memory layout or architectural components: vector registers, DMAs, etc.
 
 \begin{verbatim}
-(f[0:3].T * a.T)[-1+(a.T.shape)[0]]
-array([ 16,  81, 196])
->>> ((f[0:3,] * a).T)[-1]
-array([ 16,  81, 196])
-\end{verbatim}
-To Prove:
-\begin{eqnarray}
-    (\mbox{np.vstack((a,c))[0:3].T * a.T)[-1+(a.T.shape)[0]]}\equiv  ((\mbox{np.vstack((a,c))[0:3,] * a).T)[-1]}
-\end{eqnarray}
 
+\end{verbatim}
+To Reduce:
+\begin{eqnarray}
+ \mbox{ np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][1,])))[2,:])}
+  
+  
+\end{eqnarray}
+\section{Psi Reduction to a Denotational Normal Form (DNF)}
+To $\psi$-R an array expression requires that we:
+\begin{enumerate}
+    \item We  prove that the shapes of both expressions are equivalent,
+    \item We prove all indices based on shapes are equivalent.
+\end{enumerate}
+
+
+We equate the NumPy expressions to MoA expressions. Then we $\psi$-Reduce.
+Each time we present a mathematical proof and want to become more mathematical in our explanation we use  {\em MoA} expressions to inform the reader we are doing mathematics without any mention of language. It is important to note that We can translate between the two notations easily  because they are semantically equivalent expressions. We use the {\em syntactic sugar} of Python and NumPy to  converse with the reader. We only change syntax for those interested in the mathematics and want to know more. Moreover, to show long proofs, it is often historic mathematically to use single variable names, and/or complex symbolic expressions. 
 \newpage
 \section{Multidimensional arrays: MoA and NumPy}
 
