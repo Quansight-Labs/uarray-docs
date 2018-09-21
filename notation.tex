@@ -140,7 +140,10 @@ array([ 16,  81, 196])
 >>> ((f[0:3,] * a).T)[-1]
 array([ 16,  81, 196])
 \end{verbatim}
-
+To Prove:
+\begin{eqnarray}
+    (np.vstack((a,c))[0:3].T * a.T)[-1+(a.T.shape)[0]]\equiv  ((np.vstack((a,c))[0:3,] * a).T)[-1]
+\end{eqnarray}}
 \newpage
 \section{Multidimensional arrays: MoA and NumPy}
 
