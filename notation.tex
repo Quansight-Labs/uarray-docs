@@ -8,7 +8,9 @@
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily}
 \newcommand{\py}{\lstinline}
-
+\newcommand{\rshp}{\,\widehat{\Rho}\;}
+\newcommand{\Rho}{\,\rho\,}
+\newcommand{\Drop}{\,\nabla\,}
 \newcommand{\dims}{\delta\,}
 \newcommand{\shape}{\rho\,}
 \newcommand{\reshape}{\,\rho\,}
@@ -24,6 +26,9 @@
 \newcommand{\id}[1]{\mathrm{id}(\op{#1})}
 \newcommand{\red}[1]{{}_{\op{#1}\!}\mathrm{red}\,}
 \newcommand{\scan}[1]{{}_{\op{#1}\!}\mathrm{scan}\,}
+\newcommand{\kron}{\bigcirc\,\!\!\!\!\!\!\times\;}
+\newcommand{\Ravel}{\,\mbox{\tt rav}\,}
+\newcommand{\cat}{+\!\!\!+}
 \newcommand{\gu}{\mathrm{gu}\,}
 \newcommand{\gd}{\mathrm{gd}\,}
 \newcommand{\range}{\iota\,}
@@ -31,20 +36,21 @@
 \newcommand{\expand}{\,\notbackslash\,}
 \newcommand{\reverse}{\phi\,}
 \newcommand{\rotate}[1]{{#1}\theta\,}
-\newcommand{\transpose}[1]{{#1}\bigcirc\!\!\!\!\!\!\backslash\,\,} % find proper symbol
+%\newcommand{\transpose}[1]{{#1}\bigcirc\!\!\!\!\!\!\backslash\,\,} % find proper symbol
 \newcommand{\hop}[2]{{{}_{#1}\Omega_{#2}}\,}
 \newcommand{\getitem}[2]{{#2}\,\psi\,{#1}}
-
+\newcommand{\transpose}{\bigcirc\!\!\!\!\!\backslash\;}
 \newcommand{\Z}{{\mathbb{Z}}}
 
 \title{MoA formalism and arrays in software}
-\author{Pearu Peterson}
+\author{Pearu Peterson and Hameer and Saul and Lenore and Travis\\
+Quansight, Labs}
 
 \begin{document}
 \maketitle
 \section{Introduction}
 
-MoA - Mathematics of Arrays - defines formalism (based on APL) to
+MoA - Mathematics of Arrays - defines a formalism (based on APL) to
 describe multidimensional arrays and operations on these. On the other
 hand, contemporary array processing software (NumPy, Xnd, Apache
 Arrow, etc) implement multidimensional array container objects and
@@ -52,27 +58,23 @@ define UI to interact with the array objects. The aim of this document
 is to provide a mapping between MoA formalism and UI-s of widely used
 array processing software.
 
-
-
 \section{Basic definitions}
 
 The MoA formalism is originally defined in ``A Mathematics of Arrays''
-by Lenore Mullin, PhD thesis, 1988.  We use NumPy UI as a
+by Lenore Mullin, PhD thesis, 1988\cite{mul00}.  We use NumPy UI as a
 representative of a software implementing UI for multidimensional
 arrays. For brevity, we assume \verb+from numpy import *+.
 
+\noindentI
 In general, \emph{an array is an object that has a mapping to get
   array items} \footnote{A mapping $f$ is a set of argument and value
   pairs,$(i,v)$, and is represented as $f(i)=v$. We consider only
   single-valued mappings.} . The arguments to the mapping are called
 \emph{indices}, all valid indices define the so-called \emph{index
   set} of an array. The items can be arbitrary objects.
-
-Two arrays are \emph{equal} iff their get items mappings are equal.
-
+Two arrays are \emph{equal} iff their get items mappings are equal: their shapes and components are equivalent.
 \emph{Element-wise operations} of two arrays are defined iff the index
 sets of the two arrays are equal.
-
 Arrays can be classified according to how the mappings are defined:
 \begin{description}
 \item[Multidimensional arrays:] The index set of
@@ -92,22 +94,24 @@ Arrays can be classified according to how the mappings are defined:
 
 The MoA deals with multidimensional arrays only.  The NumPy implements
 array object for multidimensional arrays only. There is one-to-one
-relation between MoA formalism and NumPy UI. Xnd implements a more
-general container object than NumPy ndarray.
+relation between MoA formalism and NumPy UI. %Xnd implements a more
+%general container object than NumPy ndarray.
 
-The goal is to extend MoA formalism to ragged arrays and then use this
-to define an UI as well as optimized algorithms to the array object
-implementation software such as Xnd. 
+%The goal is to extend MoA formalism to ragged arrays and then use this
+%to define an UI as well as optimized algorithms to the array object
+%implementation software such as Xnd. 
 
-The current working hypothesis is that the ragged arrays can be
-represented as arrays of arrays where the subarrays are
-multidimensional arrays.
+%The current working hypothesis is that the ragged arrays can be
+%represented as arrays of arrays where the subarrays are
+%multidimensional arrays.
 
 \section{Optimization of Arrays in NumPy: Dense to Start}
-We first show how the inclusion of MoA and the Psi Calculus for dense arrays
-reduces to a normal form. This is a powerful concept in that many programmers design an algorithm different. We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
+We show how the inclusion of MoA and the Psi Calculus for dense arrays
+reduces to a normal form. This is a powerful concept in that programmers may design an algorithm differently, one may be efficient, another may not, even if the answer is the same. 
+\noindent
+We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
 \subsection{A Small Example}
-Let's look at two NumPy expresssions:
+Let's look at two NumPy expresssions. we  use small shapes to help the reader go through an expression to validate results. Large sizes are used in experiments to demonstrate conjectures. 
 \begin{verbatim}
    
 >>> a=np.arange(30).reshape((2,3,5))
@@ -138,15 +142,6 @@ array([15, 16, 17, 18, 19])
 >>> 
 >>> 
 >>> A=a[:,0,:][1,]
->>> B=b[:,1,:][1,]
->>> B
-array([22, 23, 24, 25, 26])
->>> np.multiply.outer(A,B)
-array([[330, 345, 360, 375, 390],
-       [352, 368, 384, 400, 416],
-       [374, 391, 408, 425, 442],
-       [396, 414, 432, 450, 468],
-       [418, 437, 456, 475, 494]])
 >>> B=b[:,1,:][0,]
 >>> np.multiply.outer(A,B)
 array([[105, 120, 135, 150, 165],
@@ -155,12 +150,6 @@ array([[105, 120, 135, 150, 165],
        [126, 144, 162, 180, 198],
        [133, 152, 171, 190, 209]])
 >>> C=np.multiply.outer(A,B)
->>> C
-array([[105, 120, 135, 150, 165],
-       [112, 128, 144, 160, 176],
-       [119, 136, 153, 170, 187],
-       [126, 144, 162, 180, 198],
-       [133, 152, 171, 190, 209]])
 >>> A
 array([15, 16, 17, 18, 19])
 >>> B
@@ -171,32 +160,29 @@ array([[105, 120, 135, 150, 165],
        [119, 136, 153, 170, 187],
        [126, 144, 162, 180, 198],
        [133, 152, 171, 190, 209]])
->>> A
-array([15, 16, 17, 18, 19])
->>> B
-array([ 7,  8,  9, 10, 11])
->>> A.shape
-(5,)
 >>> C[2,:]
 array([119, 136, 153, 170, 187])
 >>> A * C[2,:]
-array([1785, 2176, 2601, 3060, 3553])
 >>> np.inner(A,C[2,:])
 13175
 \end{verbatim}
      
 Let's reduce an expression to
 a Denotational Normal Form (DNF), a semantic normal form that is not yet aware of memory layout or architectural components: vector registers, DMAs, etc.
-
+We put all the expressions above into one that uses only a and b.
+Moreover, we use small sizes for the reader to follow examples. Our experiments
+use sizes from small to large to emphasize what sizes achieve the best speed-ups. We
+explain why this is true.
+%np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][1,])))[2,:])
 \begin{verbatim}
+To Reduce:
+
+np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][0,])))[2,:])
 
 \end{verbatim}
-To Reduce:
-\begin{eqnarray}
- \mbox{ np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][1,])))[2,:])}
   
   
-\end{eqnarray}
+
 \section{Psi Reduction to a Denotational Normal Form (DNF)}
 To $\psi$-R an array expression requires that we:
 \begin{enumerate}
@@ -208,11 +194,62 @@ To $\psi$-R an array expression requires that we:
 We equate the NumPy expressions to MoA expressions. Then we $\psi$-Reduce.
 Each time we present a mathematical proof and want to become more mathematical in our explanation we use  {\em MoA} expressions to inform the reader we are doing mathematics without any mention of language. It is important to note that We can translate between the two notations easily  because they are semantically equivalent expressions. We use the {\em syntactic sugar} of Python and NumPy to  converse with the reader. We only change syntax for those interested in the mathematics and want to know more. Moreover, to show long proofs, it is often historic mathematically to use single variable names, and/or complex symbolic expressions.
 \subsection{DNF}
+We will use the same variable names from above except we annotate to indicate dimensionality, e.g. $\vec v$ for a vector and $A^2$ for a matrix, etc.
+\begin{eqnarray}
+A^3 \equiv < 2 \;3\; 5 > \rshp (\iota 30) \\
+B^3 \equiv 2+A^3
+\end{eqnarray}
+$A^3,B^3$ are a and b above.
+Let:
+\begin{eqnarray}
+\vec a \equiv (<1>\psi( <0> \psi (<1\;0\;2> \transpose A^3  ))) \\
+\vec b \equiv (<0>\psi( <1> \psi (<1\;0\;2> \transpose B^3  )))\\
+{OP}^2 \equiv \vec a \;\; _{\bf outer}+\;\; \vec b \\
+Result \equiv \vec a + _{\bf inner}\times (<2> \psi {OP}^2)\\
+\end{eqnarray}
+To find (1) shape, then (2) components.
+\subsection{Get Shape:}
+\begin{eqnarray}
+\shape (\vec a + _{\bf inner}\times ) \equiv ((-1) \Drop (\shape \vec a) )\cat (1 \Drop (\shape (<2> \psi {OP}^2))) \\ 
+\equiv (-1) \Drop \Theta \equiv 1 \Drop \Theta
+\end{eqnarray}
+The shape of a vector is a one element vector, and 1 Drop a one element vector is the empty vector, $\Theta$.
+Next, we get components based on shape.
+
+$\forall \vec i s.t. 0  \leq^* \vec i <^* \Theta $ which says that the only valid index vector of an array with empty shape, i.e. a scalar is $\Theta$, the empty vector. 
+\begin{eqnarray}
+\Theta \psi \vec a + _{\bf inner}\times \vec b \equiv +_{reduce} (\vec a \times (<2> \psi {OP}^2))
+\end{eqnarray}
+This is an identity, $\Theta \psi \xi \equiv \xi$ Now get shape of the multiplication.
+\begin{eqnarray}
+\rho ((\vec a \times (<2> \psi {OP}^2)) \equiv \rho \vec a \equiv  2 \Drop (\rho < 1\;0\;2> \transpose A^3 )\equiv 2 \drop < 3\;2\;5> \equiv <5>
+\end{eqnarray}
+$\forall 0 \leq i <5 $
+\begin{eqnarray}
+<i> \psi(\vec a \times <2>\psi {OP}^2) \equiv <i> \psi \vec a \times <i> \psi <2> \psi {OP}^2 \\
+<i> \psi <1> \psi <0> \psi <1\;0\;2> \transpose A^3 \equiv <0\;1 \;i> \psi <1\;0\;2> A^3\\
+\equiv <1\; 0\; i> \psi   A^3\\
+<i> \psi  <2> {OP}^2 \equiv <2\;i> \psi {OP}^2\\
+\equiv <2\;i> \psi {\vec a \;\; _{\bf outer}+\;\; \vec b}
+\end{eqnarray}
+What is shape of $\vec a \;\; _{\bf outer}+\;\; \vec b $? 
+
+It is $(2\Drop \rho <1\; 0\; 2>\transpose A^3) \cat (2\Drop \rho  <1\; 0\; 2> \transpose B^3) \equiv <5\;5>$
+
+Therefore, substituting we get:
+\[ (<0\;1\;2> \psi A^3) \times <0\;1>\psi B^3\]
+This gets the vector we need for the inner product. 
+
+Finally we sum the vector for all i.
+\[ +_{reduce} (<1\;0>\psi A^3) \times(( <1\;0\;2> \psi A^3)\times <0\;1\> \psi B^3)\]
 \begin{verbatim}
-    sum((a[0,1,:]*b[1,1,:]))
+  sum((a[1,0,:] * (a[1,0,2]*b[0,1,:])))
 \end{verbatim}
 \newpage
-\section{Multidimensional arrays: MoA and NumPy}
+
+\section*{Appendix}
+
+\subsection*{Multidimensional arrays: MoA and NumPy}
 
 \begin{comment}
 \newcommand{\MoADefinition}[1]{
@@ -344,4 +381,8 @@ $\xi_l(\hop{f}{\vec a})\xi_r$&&\\
 \end{tabular}  
 \end{tabularx}
 
+
+Referencing Travis \cite{travis0}, and Mullin \cite{mul00}.
+\bibliography{paper}
+\bibliographystyle{plain}
 \end{document}
