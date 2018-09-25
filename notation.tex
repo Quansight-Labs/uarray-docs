@@ -8,39 +8,47 @@
 \usepackage{listings}
 \lstset{basicstyle=\ttfamily}
 \newcommand{\py}{\lstinline}
-\newcommand{\rshp}{\,\widehat{\Rho}\;}
-\newcommand{\Rho}{\,\rho\,}
-\newcommand{\Drop}{\,\nabla\,}
-\newcommand{\dims}{\delta\,}
-\newcommand{\shape}{\rho\,}
-\newcommand{\reshape}{\,\rho\,}
-\newcommand{\size}{\tau\,}
-\newcommand{\product}{\pi\,}
-\newcommand{\ravel}{\mathrm{rav}\,}
-\newcommand{\take}[2]{{#1\,\uparrow\,#2}}
-\newcommand{\drop}[2]{{#1\,\downarrow\,#2}}
-\newcommand{\minus}[1]{{}^{\boldsymbol{\mbox{-}}\!}{#1}}
-\newcommand{\rop}[1]{\,\mathrm{#1}^*\,}
-\newcommand{\op}[1]{\,\mathrm{#1}\,}
-\newcommand{\uop}[1]{\mathrm{#1}\,}
-\newcommand{\id}[1]{\mathrm{id}(\op{#1})}
-\newcommand{\red}[1]{{}_{\op{#1}\!}\mathrm{red}\,}
+
+% Math notations
+\newcommand{\Z}{{\mathbb{Z}}}                     % set of integers
+
+% MoA notations
+\newcommand{\minus}{{}^{\boldsymbol{\mbox{-}}\!}} % scalar negation operator
+\newcommand{\rop}[1]{\,\mathrm{#1}^*\,}           % relational operation
+\newcommand{\op}[1]{\,\mathrm{#1}\,}              % binary operation
+\newcommand{\uop}[1]{\mathrm{#1}\,}               % unary operation
+\newcommand{\hop}[2]{{{}_{#1}\!\Omega_{#2}}\,}      % higher order operation
+\newcommand{\id}[1]{\mathrm{id}(\op{#1})}         % identity of operations
+\newcommand{\dims}{\delta\,}                      % array dimension operator
+\newcommand{\shape}{\rho\,}                       % array shape operator
+\newcommand{\size}{\tau\,}                        % array size operator
+\newcommand{\reshape}{\,\widehat{\rho}\,}         % reshape operator
+\newcommand{\drop}{\,\nabla\,}                    % drop operator
+\newcommand{\take}{\,\Delta\,}                    % take operator
+\newcommand{\product}{\pi\,}                      % product operator
+\DeclareMathOperator{\rav}{rav}
+\newcommand{\ravel}{\rav\,}                       % ravel operator
+\newcommand{\range}{\iota\,}                      % range operator
+\newcommand{\transpose}{\bigcirc\!\!\!\!\!\backslash\;} % transpose operator, need a better symbol
+\newcommand{\vc}[1]{<#1>}                         % vector with one component
+\newcommand{\vcc}[2]{<#1\;#2>}                    % vector with two components
+\newcommand{\vccc}[3]{<#1\;#2\;#3>}               % vector with four components
+\newcommand{\outerprod}[1]{\,\bullet_{#1}\,}              % outer product opetation
+\newcommand{\innerprod}[2]{\,{}_{#1}\!\!\bullet_{#2}\,}   % inner product opetation
+\DeclareMathOperator{\red}{red}
+\newcommand{\reduce}[1]{{}_{#1}\!\red\,}          % reduce operator
+\newcommand{\getitem}[2]{{#2}\,\psi\,{#1}}        % psi operator
+
+
 \newcommand{\scan}[1]{{}_{\op{#1}\!}\mathrm{scan}\,}
 \newcommand{\kron}{\bigcirc\,\!\!\!\!\!\!\times\;}
-\newcommand{\Ravel}{\,\mbox{\tt rav}\,}
 \newcommand{\cat}{+\!\!\!+}
 \newcommand{\gu}{\mathrm{gu}\,}
 \newcommand{\gd}{\mathrm{gd}\,}
-\newcommand{\range}{\iota\,}
 \newcommand{\compress}{\,\notslash\,}
 \newcommand{\expand}{\,\notbackslash\,}
 \newcommand{\reverse}{\phi\,}
 \newcommand{\rotate}[1]{{#1}\theta\,}
-%\newcommand{\transpose}[1]{{#1}\bigcirc\!\!\!\!\!\!\backslash\,\,} % find proper symbol
-\newcommand{\hop}[2]{{{}_{#1}\Omega_{#2}}\,}
-\newcommand{\getitem}[2]{{#2}\,\psi\,{#1}}
-\newcommand{\transpose}{\bigcirc\!\!\!\!\!\backslash\;}
-\newcommand{\Z}{{\mathbb{Z}}}
 
 \title{MoA formalism and arrays in software}
 \author{Pearu Peterson and Hameer and Saul and Lenore and Travis\\
@@ -65,7 +73,7 @@ by Lenore Mullin, PhD thesis, 1988\cite{mul00}.  We use NumPy UI as a
 representative of a software implementing UI for multidimensional
 arrays. For brevity, we assume \verb+from numpy import *+.
 
-\noindentI
+\noindent
 In general, \emph{an array is an object that has a mapping to get
   array items} \footnote{A mapping $f$ is a set of argument and value
   pairs,$(i,v)$, and is represented as $f(i)=v$. We consider only
@@ -110,10 +118,79 @@ We show how the inclusion of MoA and the Psi Calculus for dense arrays
 reduces to a normal form. This is a powerful concept in that programmers may design an algorithm differently, one may be efficient, another may not, even if the answer is the same. 
 \noindent
 We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
+
+\subsection{An example}
+
+In the following we demonstrate how to reduce a NumPy array expression
+to its normal form using MoA.
+
+Consider the following NumPy arrays
+\begin{verbatim}
+>>> A = np.arange(30).reshape((2,3,5))
+>>> B = 2 + A
+>>> A
+array([[[ 0,  1,  2,  3,  4],
+        [ 5,  6,  7,  8,  9],
+        [10, 11, 12, 13, 14]],
+
+       [[15, 16, 17, 18, 19],
+        [20, 21, 22, 23, 24],
+        [25, 26, 27, 28, 29]]])
+>>> B
+array([[[ 2,  3,  4,  5,  6],
+        [ 7,  8,  9, 10, 11],
+        [12, 13, 14, 15, 16]],
+
+       [[17, 18, 19, 20, 21],
+        [22, 23, 24, 25, 26],
+        [27, 28, 29, 30, 31]]])
+\end{verbatim}
+that in MoA formalism are represented as
+\begin{align}
+  A^3 &\equiv \vccc235\reshape(\range30), \\
+  B^3 &\equiv 2+A^3,
+\end{align}
+and the following array expression as an example case
+\begin{verbatim}
+>>> r = np.inner(A[1,0,:], np.outer(A[1,0,:], B[0,1,:])[2,:])
+>>> r
+13175
+\end{verbatim}
+that in MoA formalism reads
+\begin{equation}
+r \equiv (\vcc10\psi A^3) \innerprod+\times (\vc2\psi((\vcc10\psi A^3) \outerprod\times (\vcc01\psi B^3))).
+\end{equation}
+Note that when evaluating the array expression directly, the
+computation involves 30 multiplication and 4 addition
+operations. Using MoA, we reduce the above array expression to its
+normal form where the number of operations is minimal.
+
+First, the items of the left operand of the inner product are
+\begin{align*}
+  \getitem{(\vcc10\psi A^3)}i = \getitem{A^3}{\vccc10i}
+\end{align*}
+The items of the right operand of the inner product are
+\begin{align}
+&\getitem{
+  (\getitem{((\getitem{A^3}{\vcc10}) \outerprod\times (\getitem{B^3}{\vcc01}))}{\vc2})
+}{\vc i} \\
+&\equiv \getitem{((\getitem{A^3}{\vcc10}) \outerprod\times (\getitem{B^3}{\vcc01})))}{\vcc2i} \\
+&\equiv \getitem{(\getitem{A^3}{\vcc10})}{\vc2} \times \getitem{(\getitem{B^3}{\vcc01})}{\vc i}\\
+&\equiv \getitem{A^3}{\vccc102} \times \getitem{B^3}{\vccc01i}
+\end{align}
+As a result, we have
+\begin{align*}
+  r &\equiv ((\vcc10\psi A^3) \innerprod+\times  \getitem{B^3}{\vcc01}) \getitem{A^3}{\vccc102}
+\end{align*}
+that in NumPy syntax reads
+\begin{verbatim}
+>>> r_nf = np.inner(A[1,0,:], B[0,1,:]) * A[1,0,2]
+\end{verbatim}
+which contains 6 multiplications and 4 additions.
+
 \subsection{A Small Example}
 Let's look at two NumPy expresssions. we  use small shapes to help the reader go through an expression to validate results. Large sizes are used in experiments to demonstrate conjectures. 
-\begin{verbatim}
-   
+\begin{verbatim}   
 >>> a=np.arange(30).reshape((2,3,5))
 >>> a
 array([[[ 0,  1,  2,  3,  4],
@@ -196,52 +273,54 @@ Each time we present a mathematical proof and want to become more mathematical i
 \subsection{DNF}
 We will use the same variable names from above except we annotate to indicate dimensionality, e.g. $\vec v$ for a vector and $A^2$ for a matrix, etc.
 \begin{eqnarray}
-A^3 \equiv < 2 \;3\; 5 > \rshp (\iota 30) \\
+A^3 \equiv \vccc235\reshape(\range30) \\
 B^3 \equiv 2+A^3
 \end{eqnarray}
 $A^3,B^3$ are a and b above.
 Let:
 \begin{eqnarray}
-\vec a \equiv (<1>\psi( <0> \psi (<1\;0\;2> \transpose A^3  ))) \\
-\vec b \equiv (<0>\psi( <1> \psi (<1\;0\;2> \transpose B^3  )))\\
-{OP}^2 \equiv \vec a \;\; _{\bf outer}+\;\; \vec b \\
-Result \equiv \vec a + _{\bf inner}\times (<2> \psi {OP}^2)\\
+\vec a \equiv (\vc1\psi( \vc0 \psi (\vccc102 \transpose A^3  ))) \\
+\vec b \equiv (\vc0\psi( \vc1 \psi (\vccc102 \transpose B^3  )))\\
+%{OP}^2 \equiv \vec a \;\; _{\bf outer}+\;\; \vec b \\
+{OP}^2 \equiv \vec a \outerprod\times\vec b\\
+%Result \equiv \vec a + _{\bf inner}\times (\vc2 \psi {OP}^2)\\
+r \equiv \vec a \innerprod+\times(\vc2 \psi {OP}^2)\\
 \end{eqnarray}
 To find (1) shape, then (2) components.
 \subsection{Get Shape:}
 \begin{eqnarray}
-\shape (\vec a + _{\bf inner}\times ) \equiv ((-1) \Drop (\shape \vec a) )\cat (1 \Drop (\shape (<2> \psi {OP}^2))) \\ 
-\equiv (-1) \Drop \Theta \equiv 1 \Drop \Theta
+\shape (\vec a \innerprod+\times \ldots ) \equiv (\minus1 \drop (\shape \vec a) )\cat (1 \drop (\shape (\vc2 \psi {OP}^2))) \\ 
+\equiv \minus1 \drop \Theta \cat 1 \drop \Theta
 \end{eqnarray}
 The shape of a vector is a one element vector, and 1 Drop a one element vector is the empty vector, $\Theta$.
 Next, we get components based on shape.
 
 $\forall \vec i s.t. 0  \leq^* \vec i <^* \Theta $ which says that the only valid index vector of an array with empty shape, i.e. a scalar is $\Theta$, the empty vector. 
 \begin{eqnarray}
-\Theta \psi \vec a + _{\bf inner}\times \vec b \equiv +_{reduce} (\vec a \times (<2> \psi {OP}^2))
+\Theta \psi \vec a \innerprod+\times \vec b \equiv \reduce+ (\vec a \times (\vc2 \psi {OP}^2))
 \end{eqnarray}
 This is an identity, $\Theta \psi \xi \equiv \xi$ Now get shape of the multiplication.
 \begin{eqnarray}
-\rho ((\vec a \times (<2> \psi {OP}^2)) \equiv \rho \vec a \equiv  2 \Drop (\rho < 1\;0\;2> \transpose A^3 )\equiv 2 \drop < 3\;2\;5> \equiv <5>
+\shape ((\vec a \times (<2> \psi {OP}^2)) \equiv \shape \vec a \equiv  2 \drop (\shape < 1\;0\;2> \transpose A^3 )\equiv 2 \drop \vccc325 \equiv <5>
 \end{eqnarray}
 $\forall 0 \leq i <5 $
 \begin{eqnarray}
-<i> \psi(\vec a \times <2>\psi {OP}^2) \equiv <i> \psi \vec a \times <i> \psi <2> \psi {OP}^2 \\
-<i> \psi <1> \psi <0> \psi <1\;0\;2> \transpose A^3 \equiv <0\;1 \;i> \psi <1\;0\;2> A^3\\
-\equiv <1\; 0\; i> \psi   A^3\\
-<i> \psi  <2> {OP}^2 \equiv <2\;i> \psi {OP}^2\\
-\equiv <2\;i> \psi {\vec a \;\; _{\bf outer}+\;\; \vec b}
+\vc i \psi(\vec a \times \vc2\psi {OP}^2) \equiv \vc i \psi \vec a \times \vc i \psi \vc2 \psi {OP}^2 \\
+\vc i \psi \vc1 \psi \vc0 \psi \vccc102 \transpose A^3 \equiv \vccc01i \psi \vccc102 A^3\\
+\equiv \vccc10i \psi   A^3\\
+\vc i \psi  \vc2 {OP}^2 \equiv \vcc2i \psi {OP}^2\\
+\equiv \vcc2i \psi {\vec a \outerprod\times \vec b}
 \end{eqnarray}
-What is shape of $\vec a \;\; _{\bf outer}+\;\; \vec b $? 
+What is shape of $\vec a \outerprod\times \vec b $? 
 
-It is $(2\Drop \rho <1\; 0\; 2>\transpose A^3) \cat (2\Drop \rho  <1\; 0\; 2> \transpose B^3) \equiv <5\;5>$
+It is $(2\drop \shape \vccc102\transpose A^3) \cat (2\drop \shape \vccc102 \transpose B^3) \equiv \vcc55$
 
 Therefore, substituting we get:
-\[ (<0\;1\;2> \psi A^3) \times <0\;1>\psi B^3\]
+\[ (\vccc012 \psi A^3) \times \vcc01 \psi B^3\]
 This gets the vector we need for the inner product. 
 
 Finally we sum the vector for all i.
-\[ +_{reduce} (<1\;0>\psi A^3) \times(( <1\;0\;2> \psi A^3)\times <0\;1\> \psi B^3)\]
+\[ \reduce+ (\vcc10\psi A^3) \times(( \vccc102 \psi A^3)\times \vcc01 \psi B^3)\]
 \begin{verbatim}
   sum((a[1,0,:] * (a[1,0,2]*b[0,1,:])))
 \end{verbatim}
@@ -303,7 +382,7 @@ We have the following correspondence table for basic notions:
   \MoAItem{$\gamma$ function is used to define the mapping between the indices of an array and its ravelled version}{
   \begin{eqnarray*}
 \gamma(<>;<>)&\equiv&0\\
-\gamma(\vec a;\vec b)&\equiv&a_{-1} + b_{-1}\gamma(\drop{\minus1}{\vec a}; \drop{\minus1}{\vec b})
+\gamma(\vec a;\vec b)&\equiv&a_{-1} + b_{-1}\gamma({\minus1}\drop{\vec a}; {\minus1}\drop{\vec b})
   \end{eqnarray*}
 }{}
   \MoAItem{inverse of $\gamma$ with respect to the first argument}{$\gamma'\ldots \gamma(\gamma'(n;\vec x); \vec x)=n$}{}
@@ -329,12 +408,12 @@ MoA defines array construction operators:
 
 MoA defines various slicing operations:
 \MoADefinition{
-  \MoAItem{take first $k$ items; take last $k$ items}{$\take k{\vec v}\,;\,\take{\minus k}{\vec v} $}{\py'v[:k] ; v[-k:]'}
-  \MoAItem{drop first $k$ items; drop last $k$ items}{$\drop k{\vec v}\,;\,\drop{\minus k}{\vec v} $}{\py'v[k:] ; v[:-k]'}
-  \MoAItem{}{$\take\sigma\xi$}{\py''}
-  \MoAItem{}{$\drop\sigma\xi$}{\py''}
-  \MoAItem{}{$\take{\vec v}\xi$}{\py''}
-  \MoAItem{}{$\drop{\vec v}\xi$}{\py''}
+  \MoAItem{take first $k$ items; take last $k$ items}{$k\take{\vec v}\,;\,{\minus k}\take{\vec v} $}{\py'v[:k] ; v[-k:]'}
+  \MoAItem{drop first $k$ items; drop last $k$ items}{$k\drop{\vec v}\,;\,{\minus k}\drop{\vec v} $}{\py'v[k:] ; v[:-k]'}
+  \MoAItem{}{$\sigma\take\xi$}{\py''}
+  \MoAItem{}{$\sigma\drop\xi$}{\py''}
+  \MoAItem{}{${\vec v}\take\xi$}{\py''}
+  \MoAItem{}{${\vec v}\drop\xi$}{\py''}
 }
 
 MoA defines the following relational operators,$(\rop{R}, \text{\py'rop'}) \in \{(\rop{>}, \text{\py'gt'}), (\rop{<}, \text{\py'lt'}), (\rop{=}, \text{\py'eq'}), \ldots\}$ :
@@ -359,9 +438,29 @@ MoA defines various array transformation operators:
   \MoAItem{reverse vector items}{$\reverse \vec v$}{\py'v[::-1]'}
   \MoAItem{}{$\rotate{\sigma}\xi$}{\py''}
   \MoAItem{transpose of an array}{$\transpose{\vec v}\xi$}{\py''}
-  \MoAItem{reduction}{$\red{op}\xi\equiv(\getitem\xi{<0>})\op{op}\red{op}(\drop1\xi)$}{}
+  \MoAItem{reduction}{$\red{op}\xi\equiv(\getitem\xi{<0>})\op{op}\red{op}(1\drop\xi)$}{}
 }
 
+Operations with arrays
+\MoADefinition{
+  \MoAItem{higher order operation}{
+    $\getitem{\hop{f}{\vec d}}{\vec i} \equiv f(\getitem\xi{\vec i})$
+  }{}
+  \MoAItem{outer product $\xi_l\outerprod{\op{op}}\xi_r$}{
+    \begin{align*}
+      \getitem{\xi_l\outerprod{\op{op}}\xi_r}{(\vec i\cat\vec j)} \equiv
+      (\getitem{\xi_l}{\vec i}) \op{op} (\getitem{\xi_r}{\vec j})
+    \end{align*}
+  }
+  {\py|outer(x_l, x_r) FIXME|}
+  \MoAItem{inner product $\xi_l\innerprod{\op{op_0}}{\op{op_1}}\xi_r$}{
+    \begin{align*}
+      \getitem{\xi_l\innerprod{\op{op_0}}{\op{op_1}}\xi_r}{(\vec i\cat \vec j)}
+      \equiv\\ 
+      \reduce{\op{op_0}} (\getitem{\xi_l}{\vec i}) \op{op_1} (\getitem{\xi_r}{(\range q\hop{\cat}{\vcc01}\vec j)})
+    \end{align*}
+}{\py|inner(x_l, x_r) FIXME|}
+}
 
 TODO:\\
 \begin{tabularx}{\textwidth}{lX}
@@ -372,12 +471,11 @@ $\xi_l\psi\xi_r$ &&\\
 \multicolumn2{l|}{$\id{op}\ldots \sigma\op{op}\id{op}\equiv\sigma$}& identity of an operator $\op{op}$\\
 $\scan{op}$ && \\
 $\xi_l,\xi_r$ & & \\
-$\xi,\sigma\equiv \xi, (1,(\drop1{\shape\xi}))\shape\sigma$ &&\\
+$\xi,\sigma\equiv \xi, (1,(1\drop{\shape\xi}))\shape\sigma$ &&\\
 $\vec v[\vec x]$ &&\\
 $\gu\vec v\,;\,\gd\vec v$ &&\\
 $\hop{f}{\vec a}\xi$&&\\
 $\xi_l(\hop{f}{\vec a})\xi_r$&&\\
-
 \end{tabular}  
 \end{tabularx}
 
