@@ -167,7 +167,7 @@ normal form where the number of operations is minimal.
 
 First, the items of the left operand of the inner product are
 \begin{align*}
-  \getitem{(\vcc10\psi A^3)}i = \getitem{A^3}{\vccc10i}
+  \getitem{(\vcc10\psi A^3)}{\vc i} = \getitem{A^3}{\vccc10i}
 \end{align*}
 The items of the right operand of the inner product are
 \begin{align}
@@ -180,7 +180,7 @@ The items of the right operand of the inner product are
 \end{align}
 As a result, we have
 \begin{align*}
-  r &\equiv ((\vcc10\psi A^3) \innerprod+\times  \getitem{B^3}{\vcc01}) \getitem{A^3}{\vccc102}
+  r &\equiv ((\vcc10\psi A^3) \innerprod+\times  \getitem{B^3}{\vcc01})\times\getitem{A^3}{\vccc102}
 \end{align*}
 that in NumPy syntax reads
 \begin{verbatim}
