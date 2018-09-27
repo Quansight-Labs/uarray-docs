@@ -41,13 +41,13 @@ benchmark_command = python3 -m perf timeit --rigorous -o $@ --name=$*
 %-all-dask: FORCE %-0-original-dask.json %-3-reduced-dask.json
 	@echo done dask $*
 
-all: 1-all 10-all 100-all 1000-all-dask 10000-all-dask
+all: 1-all 10-all 100-all 200-all 300-all-dask 400-all-dask 500-all-dask
 	@echo done all
 
 compare_%: FORCE
 	python3 -m perf compare_to $*-*.json
 
-compare: compare_1 compare_10 compare_100 compare_1000 compare_10000
+compare: compare_1 compare_10 compare_100 compare_200 compare_300 compare_400 compare_500
 	@echo compared
 
 clean: FORCE
