@@ -28,7 +28,7 @@ all: $(foreach n,$(ns),$(n)-compare)
 
 compare: $(foreach n,$(ns),$(n)-compare)
 	@echo compared
-make
+
 clean: FORCE
 	rm *.json
 
