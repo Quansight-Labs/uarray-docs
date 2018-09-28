@@ -5,6 +5,8 @@
 \usepackage{longtable}
 \usepackage{tabularx,booktabs}
 \usepackage{listings}
+\usepackage{graphicx}
+
 \lstset{basicstyle=\ttfamily}
 \newcommand{\py}{\lstinline}
 
@@ -213,6 +215,32 @@ np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][0,])))[2,:])
 \end{verbatim}
   
   
+\subsection{Performance analysis}
+
+Now let us benchmark the original form of this expression against it's reduced normal form.
+For $n$ in ${\{1, 10, 100, 200\}}$ where $\shape A \equiv \vccc2 3 5 \times n$ we timed three
+versions of the original form and reduced form:
+
+\begin{itemize}
+  \item Inner: Uses the \verb|inner| method as written in the example.
+  \item Tensordot: Uses an equivalent form of \verb|tensordot| method instead of \verb|inner|.
+  \item Dask: Replaces use of \verb|numpy| with \verb|dask.array| to be able to compute larger values than can fit in memory. Also
+  uses \verb|tensordot| since Dask did not support \verb|inner|. 
+\end{itemize}
+
+For $n$ in ${\{300, 400, 500\}}$ we only compared Dask versions of the forms.
+
+\begin{figure}[h]
+  \includegraphics[width=1\textwidth]{benchmarks/visualization.png}
+  \caption{The mean execution time of evaluating the expression comparing the original and reduced forms under different shapes and configurations.}
+  \label{fig:plot}
+\end{figure}
+
+As seen in Figure \ref{fig:plot}, the reduced normal form version is orders of magnitude faster for both the inner and tensordot versions, but not substantially different for the Dask version. 
+
+TODO: Insert table of N, Version, Original (mean), Reduced (mean), Improvement
+TODO: Insert appendex section with more detailed benchmarking setup and link to code
+
 
 \section{Psi Reduction to a Denotational Normal Form (DNF) (TO BE REVISED)}
 To $\psi$-R an array expression requires that we:
