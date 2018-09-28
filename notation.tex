@@ -7,6 +7,7 @@
 \usepackage{tabularx,booktabs}
 \usepackage{listings}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \lstset{basicstyle=\ttfamily}
 \newcommand{\py}{\lstinline}
 
@@ -192,28 +193,19 @@ which contains 6 multiplications and 4 additions.
 \subsection{Performance analysis}
 
 Now let us benchmark the original form of this expression against it's reduced normal form.
-For $n$ in ${\{1, 10, 100, 200\}}$ where $\shape A \equiv \vccc2 3 5 \times n$ we timed three
-versions of the original form and reduced form:
-
-\begin{itemize}
-  \item Inner: Uses the \verb|inner| method as written in the example.
-  \item Tensordot: Uses an equivalent form of \verb|tensordot| method instead of \verb|inner|.
-  \item Dask: Replaces use of \verb|numpy| with \verb|dask.array| to be able to compute larger values than can fit in memory. Also
-  uses \verb|tensordot| since Dask did not support \verb|inner|. 
-\end{itemize}
-
-For $n$ in ${\{300, 400, 500\}}$ we only compared Dask versions of the forms.
+For $n$ in ${\{1, 10, 20, ..., 200\}}$ where $\shape A \equiv \vccc2 3 5 \times n$ we measured the
+execution of the original expression and the reduced expression.
 
 \begin{figure}[h]
-  \includegraphics[width=1\textwidth]{benchmarks/visualization.png}
-  \caption{The mean execution time of evaluating the expression comparing the original and reduced forms under different shapes and configurations.}
+  \includegraphics[width=1\textwidth]{benchmarks/visualization-ratio.png}
+  \caption{The ratio of the mean execution time of evaluating the reduced and the original expression comparing decreases as the shape increases.}
   \label{fig:plot}
 \end{figure}
 
-As seen in Figure \ref{fig:plot}, the reduced normal form version is orders of magnitude faster for both the inner and tensordot versions, but not substantially different for the Dask version. 
+As seen in Figure \ref{fig:plot}, the reduced normal form version is takes a third of the time when $n=1$ and a hundredth of the time when
+~$n=80$. So as $n$ increases, so does the proportional time saving from reducing the expression.
 
-TODO: Insert table of N, Version, Original (mean), Reduced (mean), Improvement
-TODO: Insert appendex section with more detailed benchmarking setup and link to code
+To reproduce the benchmarks and for all the benchmark data as well as machine information, please go to \href{https://github.com/Quansight-Labs/uarray-docs/tree/fcb6baf8bb7284ac7223de73a70cf47063df9e4b/benchmarks}{github.com/Quansight-Labs/uarray-docs}.
 
 \section*{Appendix}
 
