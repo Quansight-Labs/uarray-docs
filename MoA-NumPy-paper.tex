@@ -28,7 +28,7 @@ describe multidimensional arrays and operations on these. On the other
 hand, contemporary array processing software (NumPy, Xnd, Apache
 Arrow, etc) implement multidimensional array container objects and
 define UI to interact with the array objects. The aim of this document
-is to provide a mapping between MoA formalism and UI-s of widely used
+is  to provide a mapping between MoA formalism and UI-s of widely used
 array processing software.
 
 \section{Basic definitions}
@@ -72,14 +72,18 @@ relation between MoA formalism and NumPy UI.
 
 \section{Optimization of Arrays in NumPy: Dense to Start}
 We show how the inclusion of MoA and the Psi Calculus for dense arrays
-reduces to a normal form. This is a powerful concept in that programmers may design an algorithm differently, one may be efficient, another may not, even if the answer is the same. 
+reduces to a normal form. This is because the index compositions of the Psi Calculus, MoA's indexing, has, what Mathematicians call the {\em Church-Rosser} property, named after the Mathematicians who invented the Lambda  Calculus\footnote{The Church-Rosser Theorem states that reduction rules of the lambda calculus are confluent. As a consequence of the theorem, a term in the lambda calculus has at most one normal form, justifying reference to "the normal form" of a given normalizable term.}. This is a powerful concept in that programmers may design an algorithm differently, one may be efficient, another may not, even if the answer is the same. 
 \noindent
-We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that all intermediate arrays are eliminated. Performance analysis and graphs will show this.
+We show that there will not be performance issues for that choice because all algorithms using the MoA algebra will reduce to the same normal form. Another important concept is that it is possible to eliminate all intermediate arrays. We say possible, because we'll also discuss why we may {\em choose} to not materialize based on shape and size properties relative to access patterns and architectural components. 
+We'll first give a small example so the reader can follow through why the optimized version obtains the same results. Then, we'll discuss status of automation as well experiments that take our original and optimized versions through various sizes to illustrate our predictions.
 
-\subsection{An example}
+
+\subsection{An Example}
 
 In the following we demonstrate how to reduce a NumPy array expression
 to its normal form using MoA.
+
+{\bf Much editing to relate MoA notation}
 
 Consider the following NumPy arrays
 \begin{verbatim}
@@ -145,76 +149,76 @@ that in NumPy syntax reads
 \end{verbatim}
 which contains 6 multiplications and 4 additions.
 
-\subsection{A Small Example (TO BE REMOVED)}
-Let's look at two NumPy expresssions. we  use small shapes to help the reader go through an expression to validate results. Large sizes are used in experiments to demonstrate conjectures. 
-\begin{verbatim}   
->>> a=np.arange(30).reshape((2,3,5))
->>> a
-array([[[ 0,  1,  2,  3,  4],
-        [ 5,  6,  7,  8,  9],
-        [10, 11, 12, 13, 14]],
+%\subsection{A Small Example (TO %BE REMOVED)}
+%Let's look at two NumPy expresssions. we  use small shapes to help the reader go through an expression to validate results. Large sizes are used in experiments to demonstrate conjectures. 
+%\begin{verbatim}   
+%>>> a=np.arange(30).reshape((2,3,5))
+%>>> a
+%array([[[ 0,  1,  2,  3,  4],
+%        [ 5,  6,  7,  8,  9],
+%        [10, 11, 12, 13, 14]],
+%
+%       [[15, 16, 17, 18, 19],
+%       [20, 21, 22, 23, 24],
+%       [25, 26, 27, 28, 29]]])
+%        >>> b=a+2
+%>>> b
+%array([[[ 2,  3,  4,  5,  6],
+%        [ 7,  8,  9, 10, 11],
+%        [12, 13, 14, 15, 16]],
 
-       [[15, 16, 17, 18, 19],
-        [20, 21, 22, 23, 24],
-        [25, 26, 27, 28, 29]]])
-        >>> b=a+2
->>> b
-array([[[ 2,  3,  4,  5,  6],
-        [ 7,  8,  9, 10, 11],
-        [12, 13, 14, 15, 16]],
-
-       [[17, 18, 19, 20, 21],
-        [22, 23, 24, 25, 26],
-        [27, 28, 29, 30, 31]]])
-        >>> a.shape
-(2, 3, 5)
->>> a[:,0,:]
-array([[ 0,  1,  2,  3,  4],
-       [15, 16, 17, 18, 19]])
->>> a[:,0,:][1,]
-array([15, 16, 17, 18, 19])
->>> 
->>> 
->>> A=a[:,0,:][1,]
->>> B=b[:,1,:][0,]
->>> np.multiply.outer(A,B)
-array([[105, 120, 135, 150, 165],
-       [112, 128, 144, 160, 176],
-       [119, 136, 153, 170, 187],
-       [126, 144, 162, 180, 198],
-       [133, 152, 171, 190, 209]])
->>> C=np.multiply.outer(A,B)
->>> A
-array([15, 16, 17, 18, 19])
->>> B
-array([ 7,  8,  9, 10, 11])
->>> C
-array([[105, 120, 135, 150, 165],
-       [112, 128, 144, 160, 176],
-       [119, 136, 153, 170, 187],
-       [126, 144, 162, 180, 198],
-       [133, 152, 171, 190, 209]])
->>> C[2,:]
-array([119, 136, 153, 170, 187])
->>> A * C[2,:]
->>> np.inner(A,C[2,:])
-13175
-\end{verbatim}
+%       [[17, 18, 19, 20, 21],
+%        [22, 23, 24, 25, 26],
+%        [27, 28, 29, 30, 31]]])
+%        >>> a.shape
+%(2, 3, 5)
+%>>> a[:,0,:]
+%array([[ 0,  1,  2,  3,  4],
+%       [15, 16, 17, 18, 19]])
+%>>> a[:,0,:][1,]
+%array([15, 16, 17, 18, 19])
+%>>> 
+%>>> 
+%>>> A=a[:,0,:][1,]
+%>>> B=b[:,1,:][0,]
+%>>> np.multiply.outer(A,B)
+%array([[105, 120, 135, 150, 165],
+%       [112, 128, 144, 160, 176],
+%       [119, 136, 153, 170, 187],
+%       [126, 144, 162, 180, 198],
+%       [133, 152, 171, 190, 209]])
+%>>> C=np.multiply.outer(A,B)
+%>>> A
+%array([15, 16, 17, 18, 19])
+%>>> B
+%array([ 7,  8,  9, 10, 11])
+%>>> C
+%array([[105, 120, 135, 150, 165],
+%       [112, 128, 144, 160, 176],
+%       [119, 136, 153, 170, 187],
+%       [126, 144, 162, 180, 198],
+%       [133, 152, 171, 190, 209]])
+%>>> C[2,:]
+%array([119, 136, 153, 170, 187])
+%>>> A * C[2,:]
+%>>> np.inner(A,C[2,:])
+%13175
+%\end{verbatim}
      
-Let's reduce an expression to
-a Denotational Normal Form (DNF), a semantic normal form that is not yet aware of memory layout or architectural components: vector registers, DMAs, etc.
-We put all the expressions above into one that uses only a and b.
-Moreover, we use small sizes for the reader to follow examples. Our experiments
-use sizes from small to large to emphasize what sizes achieve the best speed-ups. We
-explain why this is true.
+%Let's reduce an expression to
+%a Denotational Normal Form (DNF), a semantic normal form that is not yet %aware of memory layout or architectural components: vector registers, DMAs, %etc.
+%We put all the expressions above into one that uses only a and b.
+%Moreover, we use small sizes for the reader to follow examples. Our experiments
+%use sizes from small to large to emphasize what sizes achieve the best speed-ups. We
+%explain why this is true.
 %np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][1,])))[2,:])
-\begin{verbatim}
-To Reduce:
+%\begin{verbatim}
+%To Reduce:
 
-np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][0,])))[2,:])
+%np.inner((a[:,0,:][1,]),(np.multiply.outer((a[:,0,:][1,]),(b[:,1,:][0,])))[2%,:])
 
-\end{verbatim}
-  
+%\end{verbatim}
+
  
 \subsection{Performance analysis}
 
@@ -225,6 +229,12 @@ execution of the original expression and the reduced expression.
 \begin{figure}[h]
   \includegraphics[width=1\textwidth]{benchmarks/visualization-ratio.png}
   \caption{The ratio of the mean execution time of evaluating the reduced and the original expression decreases as the shape increases.}
+  \label{fig:plot}
+\end{figure}
+
+\begin{figure}[h]
+  \includegraphics[width=1\textwidth]{benchmarks/visualization-two-plots.png}
+  \caption{The execution times for the original and the reduced expression.}
   \label{fig:plot}
 \end{figure}
 
@@ -244,7 +254,30 @@ To $\psi$-R an array expression requires that we:
 
 We equate the NumPy expressions to MoA expressions. Then we $\psi$-Reduce.
 Each time we present a mathematical proof and want to become more mathematical in our explanation we use  {\em MoA} expressions to inform the reader we are doing mathematics without any mention of language. It is important to note that We can translate between the two notations easily  because they are semantically equivalent expressions. We use the {\em syntactic sugar} of Python and NumPy to  converse with the reader. We only change syntax for those interested in the mathematics and want to know more. Moreover, to show long proofs, it is often historic mathematically to use single variable names, and/or complex symbolic expressions.
-\subsection{DNF (TO BE REMOVED)}
+\subsection{Steps to Automation}
+We presently are working on a high-level array computing interface (library) that provides:
+\begin{itemize}
+    \item Automatic reduction of expressions.
+    \item Multiple back ends for computation. 
+\end{itemize}
+We have given an example of hand automation and build upon numerous prototypes to discuss our attempts
+at automation easily accessible to contemporary applications, e.g. Tensorflow and PyTorch, that need it. 
+\subsection{What is this for?}
+\begin{itemize}
+    \item Reducing computation and memory from intermediate expressions. 
+    \item Express intent without worrying about optimization details.
+    \item Writing array operations in an abstract way so that they can be executed efficiently on multiple types / more easily switch out implementation. 
+\end{itemize}
+\subsubsection{Some Examples of Switching out Implementation.}
+\begin{itemize}
+    \item Demonstrate an expression with the NumPy backend
+    \item Demonstrate how to write TensorFlow or PyTorch backend and then how to apply same expression with this backend.
+    \item Show how this gets translated.
+\end{itemize}
+Overall goals are to create an array computation ecosystem in python work better together by making it more modular, thus making it possible to innovate faster at different levels without rewriting everything. Ideally we ant to automatically choose back-end based on size or nature of problem. 
+\newpage
+{\bf Appendix}
+\subsection{DNF (TO BE REVISED: see above.)}
 We will use the same variable names from above except we annotate to indicate dimensionality, e.g. $\vec v$ for a vector and $A^2$ for a matrix, etc.
 \begin{eqnarray}
 A^3 \equiv \vccc235\reshape(\range30) \\
