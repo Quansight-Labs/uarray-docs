@@ -1,41 +1,52 @@
+import os
 import pathlib
 import perf
 from collections import defaultdict
 from matplotlib import pyplot as plt
 import numpy as np
 
-def get_items():
-    for path in pathlib.Path('.').glob("*.json"):
+def get_items(d):
+    for path in pathlib.Path(d).glob("*.json"):
         try:
             _, reduced = path.stem.split('-', 2)
         except ValueError:
             continue
         is_reduced = reduced == 'reduced'
-        benchmark = perf.Benchmark.load(str(path))
+        try:
+            benchmark = perf.Benchmark.load(str(path))
+        except Exception as msg:
+            print(f'Failed to load {path}: {msg}. SKIPPING')
+            continue
         n = int(benchmark.get_name())
         for value in benchmark.get_values():
             yield {"n": n, "time": value * 1000, "reduced": is_reduced}
 
-
-def main():
+def get_data(d):
+    if not os.path.isdir(d):
+        return None, None, None
     _reduced = defaultdict(list)
     _original = defaultdict(list)
-    for items in get_items():
+    for items in get_items(d):
         (_reduced if items['reduced'] else _original)[items['n']].append(items['time'])
 
-    reduced_n = np.array(sorted(_reduced))
-    reduced_time = np.zeros(len(reduced_n))
-    for i,n in enumerate(reduced_n):
-        reduced_time[i] = np.mean(_reduced[n])
+    n = np.array(sorted(set(_reduced.keys()).intersection(_original.keys())))
 
-    original_n = np.array(sorted(_original))
-    original_time = np.zeros(len(original_n))
-    for i,n in enumerate(original_n):
-        original_time[i] = np.mean(_original[n])
+    reduced_time = np.zeros(len(n))
+    for i,_n in enumerate(n):
+        reduced_time[i] = np.mean(_reduced[_n])
 
-    assert (reduced_n == original_n).all()
-    n = reduced_n
-    
+    original_time = np.zeros(len(n))
+    for i,_n in enumerate(n):
+        original_time[i] = np.mean(_original[_n])    
+
+    return n, original_time, reduced_time
+        
+def main():
+    l1 = 'inner(a,outer(a,a+2)[1])'
+    l2 = 'inner(a,outer(a,a+2,out=cache)[1])'
+    n1, ot1, rt1 = get_data('.')
+    n2, ot2, rt2 = get_data('prealloc')
+
     def original_nops(n):
         'the number of arithmetic operations in original expression'
         return (5*n)**2 + 5*n + 5*n-1.
@@ -44,11 +55,14 @@ def main():
         'the number of arithmetic operations in reduced expression'
         return 5*n + 5*n-1 + 1.
 
-    poly = np.polyfit(reduced_n, original_time/reduced_time, 2)
+    #poly = np.polyfit(reduced_n, original_time/reduced_time, 2)
     # Speedup plot.
     plt.figure()
-    plt.plot(reduced_n, np.polyval(poly, reduced_n), label='quadratic')
-    plt.plot(n, original_time/reduced_time, label='measured')
+    #plt.plot(reduced_n, np.polyval(poly, reduced_n), label='quadratic')
+    if n1 is not None:
+        plt.plot(n1, ot1/rt1, label=l1)
+    if n2 is not None:
+        plt.plot(n2, ot2/rt2, label=l2)
     plt.ylabel('Speedup factor')
     plt.xlabel('Size parameter, n')
     plt.legend()
@@ -57,8 +71,12 @@ def main():
 
     # Timing plot
     plt.figure()
-    plt.plot(n, original_time, label='original')
-    plt.plot(n, reduced_time, label='reduced')
+    if n1 is not None:
+        plt.plot(n1, ot1, label='original')
+        plt.plot(n1, rt1, label='reduced')
+    if n2 is not None:
+        plt.plot(n2, ot2, label='original')
+        plt.plot(n2, rt2, label='reduced')
     plt.ylabel('Time taken')
     plt.xlabel('Size parameter, n')
     plt.legend()
