@@ -2,6 +2,8 @@ import os
 import pathlib
 import perf
 from collections import defaultdict
+import matplotlib as mpl
+mpl.use('TkAgg')
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -66,7 +68,7 @@ def main():
     plt.ylabel('Speedup factor')
     plt.xlabel('Size parameter, n')
     plt.legend()
-    plt.savefig('speedup.png')
+    plt.savefig('speedup.png', dpi=400)
     plt.show()
 
     # Timing plot
@@ -80,7 +82,7 @@ def main():
     plt.ylabel('Time taken')
     plt.xlabel('Size parameter, n')
     plt.legend()
-    plt.savefig('timing.png')
+    plt.savefig('timing.png', dpi=400)
     plt.show()
     
 if __name__ == '__main__':
