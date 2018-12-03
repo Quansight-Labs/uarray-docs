@@ -44,7 +44,7 @@ def get_data(d):
     return n, original_time, reduced_time
         
 def main():
-    l1 = 'inner(a,outer(a,a+2)[1])'
+    l1 = 'measured'
     l2 = 'inner(a,outer(a,a+2,out=cache)[1])'
     n1, ot1, rt1 = get_data('.')
     n2, ot2, rt2 = get_data('prealloc')
@@ -57,10 +57,10 @@ def main():
         'the number of arithmetic operations in reduced expression'
         return 5*n + 5*n-1 + 1.
 
-    #poly = np.polyfit(reduced_n, original_time/reduced_time, 2)
+    poly = np.polyfit(n1, ot1/rt1, 2)
     # Speedup plot.
     plt.figure()
-    #plt.plot(reduced_n, np.polyval(poly, reduced_n), label='quadratic')
+    plt.plot(n1, np.polyval(poly, n1), label='quadratic')
     if n1 is not None:
         plt.plot(n1, ot1/rt1, label=l1)
     if n2 is not None:
@@ -69,7 +69,7 @@ def main():
     plt.xlabel('Size parameter, n')
     plt.legend()
     plt.savefig('speedup.png', dpi=400)
-    plt.show()
+    # plt.show()
 
     # Timing plot
     plt.figure()
@@ -83,7 +83,7 @@ def main():
     plt.xlabel('Size parameter, n')
     plt.legend()
     plt.savefig('timing.png', dpi=400)
-    plt.show()
+    # plt.show()
     
 if __name__ == '__main__':
     main()
